@@ -10,7 +10,6 @@ START SLAVE;
 
 lima nerdctl exec -it debezium-proxysql-failover_mysqlmaster_1 bash -c 'mysql -u root -pdebezium inventory'
 
-
 lima nerdctl exec -it debezium-proxysql-failover_proxysql_1 bash -c 'mysql -u admin -padmin -h 127.0.0.1 -P 6032'
 INSERT INTO mysql_servers(hostgroup_id,hostname,port,weight) VALUES (0,'mysql1',3306,10000000);
 INSERT INTO mysql_servers(hostgroup_id,hostname,port,weight) VALUES (0,'mysql2',3306,1);
@@ -31,18 +30,3 @@ LOAD MYSQL USERS TO RUNTIME;
 SAVE MYSQL USERS TO DISK;
 
 curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-mysql.json
-
-INSERT DATA:
-------------
-lima nerdctl exec -it debezium-proxysql-failover_mysqlmaster_1 bash -c 'mysql -u root -pdebezium inventory'
-INSERT INTO customers VALUES (default, 'XXX','XXX','XXX@example.com');
-INSERT INTO customers VALUES (default, 'XXX2','XXX2','XXX2@example.com');
-INSERT INTO customers VALUES (default, 'XXX3','XXX3','XXX3@example.com');
-INSERT INTO customers VALUES (default, 'XXX4','XXX4','XXX4@example.com');
-INSERT INTO customers VALUES (default, 'XXX5','XXX5','XXX5@example.com');
-INSERT INTO customers VALUES (default, 'XXX6','XXX6','XXX6@example.com');
-INSERT INTO customers VALUES (default, 'XXX7','XXX7','XXX7@example.com');
-INSERT INTO customers VALUES (default, 'XXX8','XXX8','XXX8@example.com');
-INSERT INTO customers VALUES (default, 'XXX9','XXX9','XXX9@example.com');
-INSERT INTO customers VALUES (default, 'XXX10','XXX10','XXX10@example.com');
-INSERT INTO customers VALUES (default, 'XXX11','XXX11','XXX1@example.com');

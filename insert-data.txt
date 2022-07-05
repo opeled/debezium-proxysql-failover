@@ -1,0 +1,12 @@
+lima nerdctl exec -it debezium-proxysql-failover_mysqlmaster_1 bash -c 'mysql -u root -pdebezium inventory'
+INSERT INTO customers VALUES (default, 'XXX','XXX','XXX@example.com');
+INSERT INTO customers VALUES (default, 'XXX2','XXX2','XXX2@example.com');
+INSERT INTO customers VALUES (default, 'XXX3','XXX3','XXX3@example.com');
+INSERT INTO customers VALUES (default, 'XXX4','XXX4','XXX4@example.com');
+INSERT INTO customers VALUES (default, 'XXX5','XXX5','XXX5@example.com');
+INSERT INTO customers VALUES (default, 'XXX6','XXX6','XXX6@example.com');
+INSERT INTO customers VALUES (default, 'XXX7','XXX7','XXX7@example.com');
+INSERT INTO customers VALUES (default, 'XXX8','XXX8','XXX8@example.com');
+INSERT INTO customers VALUES (default, 'XXX9','XXX9','XXX9@example.com');
+INSERT INTO customers VALUES (default, 'XXX10','XXX10','XXX10@example.com');
+INSERT INTO customers VALUES (default, 'XXX11','XXX11','XXX1@example.com');
