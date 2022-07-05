@@ -1,11 +1,11 @@
 AFTER CONTAINERS UP:
 --------------------
 lima nerdctl exec -it debezium-proxysql-failover_mysql1_1 bash -c 'mysql -u root -pdebezium inventory'
-CHANGE MASTER TO MASTER_HOST='mysqlmaster', MASTER_USER='replicator', MASTER_PASSWORD='replpass', MASTER_LOG_FILE='mysql-bin.000003',MASTER_LOG_POS=194;
+CHANGE MASTER TO MASTER_HOST='mysqlmaster', MASTER_USER='replicator', MASTER_PASSWORD='replpass', MASTER_AUTO_POSITION = 1;
 START SLAVE;
 
 lima nerdctl exec -it debezium-proxysql-failover_mysql2_1 bash -c 'mysql -u root -pdebezium inventory'
-CHANGE MASTER TO MASTER_HOST='mysqlmaster', MASTER_USER='replicator', MASTER_PASSWORD='replpass', MASTER_LOG_FILE='mysql-bin.000003',MASTER_LOG_POS=194;
+CHANGE MASTER TO MASTER_HOST='mysqlmaster', MASTER_USER='replicator', MASTER_PASSWORD='replpass', MASTER_AUTO_POSITION = 1;
 START SLAVE;
 
 lima nerdctl exec -it debezium-proxysql-failover_mysqlmaster_1 bash -c 'mysql -u root -pdebezium inventory'
