@@ -37,6 +37,8 @@ lima nerdctl compose up --build
     - Create a binlog consumer
     
 ## How To Reproduce Connector failover failure
+The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs, we're using `flush logs` for that.
+
 1. Create the env as specified [above](#env-set-up)
 2. Insert rows into MySQL Master - DML can be taken from [insert-data.txt](./insert-data.txt)
 3. `flush logs;` on mysql 1
