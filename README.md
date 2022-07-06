@@ -46,6 +46,9 @@ LOAD MYSQL VARIABLES TO RUNTIME;
 SAVE MYSQL VARIABLES TO DISK;   
 LOAD MYSQL USERS TO RUNTIME;
 SAVE MYSQL USERS TO DISK;
+update global_variables set variable_value="8.0.4 (ProxySQL)" where variable_name='mysql-server_version';
+load mysql variables to run;
+save mysql variables to disk;
 ```
 
 3. Start a binlog Debezium connector by executing the following. Note that the connector is set to work with the proxy sql address - for failover capabilities.
@@ -54,24 +57,17 @@ curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" 
 ```
 
 ## How To Reproduce Connector failover failure
-The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs, we're using `flush logs` for that.
+The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs,
+specifically causing already executed gtids not to exist in the failover mysql instance.
 
 1. Create the env as specified [above](#env-set-up)
 2. Insert rows into MySQL Master - DMLs can be taken from [insert-data.txt](./insert-data.txt)
-   1. wait for `connect-offsets` topics to represent the connector's latest offset
-3. `flush logs;` on mysql 1
-4. Insert rows into MySQL Master
-   1. wait for `connect-offsets` topics to represent the connector's latest offset
-5. `flush logs;` on mysql 2
-6. Insert rows into MySQL Master
-   1. wait for `connect-offsets` topics to represent the connector's latest offset
-7. `flush logs;` on mysql 2
-8. Insert rows into MySQL Master
-   2. wait for `connect-offsets` topics to represent the connector's latest offset
-9. kill / pause mysql 1 container
-10. Insert rows into MySQL Master
-11. Wait for proxySql to identify mysql 1 is unavailable and failover to mysql 2
-12. If connector does not fail, restart the connector's task (`curl -X POST http://localhost:8083/connectors/inventory-connector/tasks/0/restart`)
+3. `flush logs;` on mysql 2
+4. repeat steps 2 + 3 multiple times
+5. `PURGE BINARY LOGS TO <latest_binary_log_file_name_in_mysql2 - 1>;` on mysql 2 - purge all binary logs in mysql 2 except last one
+6. kill / pause mysql 1 container
+7. Insert rows into MySQL Master
+8. Wait for proxySql to identify mysql 1 is unavailable and failover to mysql 2
 
 At this point Debezium connector will fail.
 Even in case the connector's task is restarted (`curl -X POST http://localhost:8083/connectors/inventory-connector/tasks/0/restart`) the connector will not recover.<br>
