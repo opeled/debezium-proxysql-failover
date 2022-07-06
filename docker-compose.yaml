@@ -9,6 +9,9 @@ services:
       - MYSQL_ROOT_PASSWORD=debezium
       - MYSQL_USER=mysqluser
       - MYSQL_PASSWORD=mysqlpw
+    depends_on:
+      - mysql1
+      - mysql2
   zookeeper:
     image: quay.io/debezium/zookeeper:1.9
     ports:
@@ -47,7 +50,7 @@ services:
      - MYSQL_USER=mysqluser
      - MYSQL_PASSWORD=mysqlpw
     depends_on:
-      - "check-db-started"
+      - check-db-started
   mysql2:
     ports:
      - 3309:3306
@@ -58,7 +61,7 @@ services:
      - MYSQL_USER=mysqluser
      - MYSQL_PASSWORD=mysqlpw
     depends_on:
-      - "check-db-started"
+      - check-db-started
   connect:
     image: quay.io/debezium/connect:1.9
     ports:
@@ -105,5 +108,5 @@ services:
   check-db-started:
     image: jwilder/dockerize:0.6.1
     depends_on:
-      - "mysqlmaster"
+      - mysqlmaster
     command: 'dockerize -wait=tcp://db:3306'

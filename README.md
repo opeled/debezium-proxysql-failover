@@ -1,12 +1,7 @@
 # Debezium + ProxySQL Failover Demo
 
-This demo aims to show Debezium failover behaviour when working with proxy sql.
-it is heavily influenced by the debezium + HA proxy demo which can be seen here:
-
-https://github.com/debezium/debezium-examples/tree/main/failover 
-
-Its important to mention that the connector which will be created via the request file
-will be set to work with the proxy sql address.
+This demo aims to reproduce Debezium's failure to failover when working with proxy sql.
+it is heavily influenced by the debezium + HA proxy example, which can be seen [here](https://github.com/debezium/debezium-examples/tree/main/failover).
 
 ![alt text](https://github.com/AviMualem/debezium-proxysql-failover/blob/main/demo.jpeg?raw=true)
 
@@ -53,7 +48,7 @@ LOAD MYSQL USERS TO RUNTIME;
 SAVE MYSQL USERS TO DISK;
 ```
 
-3. Start a binlog Debezium connector by executing:
+3. Start a binlog Debezium connector by the following. Note that the connector is set to work with the proxy sql address - for failover capabilities.
 ```
 curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-mysql.json
 ```
@@ -62,18 +57,16 @@ curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" 
 The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs, we're using `flush logs` for that.
 
 1. Create the env as specified [above](#env-set-up)
-2. Insert rows into MySQL Master - DML can be taken from [insert-data.txt](./insert-data.txt)
+2. Insert rows into MySQL Master - DMLs can be taken from [insert-data.txt](./insert-data.txt)
 3. `flush logs;` on mysql 1
 4. Insert rows into MySQL Master
 5. `flush logs;` on mysql 2
 6. Insert rows into MySQL Master
 7. `flush logs;` on mysql 2
-8. kill mysql 1 container
+9. kill mysql 1 container
 
-At this point Debezium connector will fail.<br>
-After that it's possible to restart mysql 1 container and restart Debezium connector failed task - 
-this will result in a task recovery and Debezium connector will continue to stream data as expected.
-
+At this point Debezium connector will fail.
+Even in case the connector's task is restarted (`curl -X POST http://localhost:8083/connectors/inventory-connector/tasks/0/restart`) the connector will not recover.<br>
 
 ### Where can I see my messages 
 messages can be seen at http://localhost:8000 in the customer topic
