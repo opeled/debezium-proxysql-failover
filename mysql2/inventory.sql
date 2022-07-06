@@ -17,3 +17,7 @@
 # USE inventory;
 
 DROP USER mysqluser;
+
+CHANGE MASTER TO MASTER_HOST='mysqlmaster', MASTER_USER='replicator', MASTER_PASSWORD='replpass', MASTER_AUTO_POSITION = 1;
+START SLAVE;
+

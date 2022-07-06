@@ -30,12 +30,34 @@ The deployment consists of the following components
 lima nerdctl compose up --build
 ```
 
-3. After all container are up and running, execute the commands in [setup.txt](./setup.txt) file - this will:
-    - Set Mysql slaves replication (`MASTER_AUTO_POSITION`)
-    - Create DB tables and insert data in Mysql master 
-    - Set up proxySql between mysql 1 and mysql 2 - Debezium connector will connect via proxySql
-    - Create a binlog consumer
-    
+2. After all container are up and running, execute the following commands to set up proxySql with mysql slave 1 and mysql slave 2:
+```
+lima nerdctl exec -it debezium-proxysql-failover_proxysql_1 bash -c 'mysql -u admin -padmin -h 127.0.0.1 -P 6032'
+
+INSERT INTO mysql_servers(hostgroup_id,hostname,port,weight) VALUES (0,'mysql1',3306,10000000);
+INSERT INTO mysql_servers(hostgroup_id,hostname,port,weight) VALUES (0,'mysql2',3306,1);
+UPDATE global_variables SET variable_value='proxysql' WHERE variable_name='mysql-monitor_username';
+UPDATE global_variables SET variable_value='$3Kr$t' WHERE variable_name='mysql-monitor_password';
+INSERT INTO mysql_users (username,password,fast_forward) VALUES ('debezium','dbz',1);
+LOAD MYSQL USERS TO RUNTIME;
+SAVE MYSQL USERS TO DISK;
+update global_variables set variable_value='false' where variable_name='admin-hash_passwords';
+load admin variables to runtime; 
+save admin variables to disk;
+load mysql users to runtime;
+save mysql users to disk;
+LOAD MYSQL SERVERS TO RUNTIME;
+LOAD MYSQL VARIABLES TO RUNTIME;
+SAVE MYSQL VARIABLES TO DISK;   
+LOAD MYSQL USERS TO RUNTIME;
+SAVE MYSQL USERS TO DISK;
+```
+
+3. Start a binlog Debezium connector by executing:
+```
+curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-mysql.json
+```
+
 ## How To Reproduce Connector failover failure
 The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs, we're using `flush logs` for that.
 
@@ -46,16 +68,17 @@ The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs, we're usin
 5. `flush logs;` on mysql 2
 6. Insert rows into MySQL Master
 7. `flush logs;` on mysql 2
-8. kill msql 1 container
+8. kill mysql 1 container
 
 At this point Debezium connector will fail.<br>
 After that it's possible to restart mysql 1 container and restart Debezium connector failed task - 
 this will result in a task recovery and Debezium connector will continue to stream data as expected.
 
 
-### Where can i see my messages 
+### Where can I see my messages 
 messages can be seen at http://localhost:8000 in the customer topic
 
 ### Stop the demo
 ```
 lima nerdctl compose down
+```

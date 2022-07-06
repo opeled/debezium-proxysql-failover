@@ -32,6 +32,11 @@ services:
      - MYSQL_ROOT_PASSWORD=debezium
      - MYSQL_USER=mysqluser
      - MYSQL_PASSWORD=mysqlpw
+    healthcheck:
+      test: [ "CMD-SHELL", 'mysqladmin ping' ]
+      interval: 10s
+      timeout: 2s
+      retries: 10
   mysql1:
     build:
       ./mysql1    
@@ -41,6 +46,8 @@ services:
      - MYSQL_ROOT_PASSWORD=debezium
      - MYSQL_USER=mysqluser
      - MYSQL_PASSWORD=mysqlpw
+    depends_on:
+      - "check-db-started"
   mysql2:
     ports:
      - 3309:3306
@@ -50,6 +57,8 @@ services:
      - MYSQL_ROOT_PASSWORD=debezium
      - MYSQL_USER=mysqluser
      - MYSQL_PASSWORD=mysqlpw
+    depends_on:
+      - "check-db-started"
   connect:
     image: quay.io/debezium/connect:1.9
     ports:
@@ -92,3 +101,9 @@ services:
       - zookeeper
       - kafka
       - rest_proxy
+  # Wait for MySQL to be joinable.
+  check-db-started:
+    image: jwilder/dockerize:0.6.1
+    depends_on:
+      - "mysqlmaster"
+    command: 'dockerize -wait=tcp://db:3306'
