@@ -25,7 +25,7 @@ The deployment consists of the following components
 lima nerdctl compose up --build
 ```
 
-2. After all container are up and running, execute the following commands to set up proxySql with mysql slave 1 and mysql slave 2:
+2. After all container are up and services are running, execute the following commands to set up proxySql with mysql slave 1 and mysql slave 2:
 ```
 lima nerdctl exec -it debezium-proxysql-failover_proxysql_1 bash -c 'mysql -u admin -padmin -h 127.0.0.1 -P 6032'
 
@@ -48,7 +48,7 @@ LOAD MYSQL USERS TO RUNTIME;
 SAVE MYSQL USERS TO DISK;
 ```
 
-3. Start a binlog Debezium connector by the following. Note that the connector is set to work with the proxy sql address - for failover capabilities.
+3. Start a binlog Debezium connector by executing the following. Note that the connector is set to work with the proxy sql address - for failover capabilities.
 ```
 curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-mysql.json
 ```
@@ -58,12 +58,20 @@ The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs, we're usin
 
 1. Create the env as specified [above](#env-set-up)
 2. Insert rows into MySQL Master - DMLs can be taken from [insert-data.txt](./insert-data.txt)
+   1. wait for `connect-offsets` topics to represent the connector's latest offset
 3. `flush logs;` on mysql 1
 4. Insert rows into MySQL Master
+   1. wait for `connect-offsets` topics to represent the connector's latest offset
 5. `flush logs;` on mysql 2
 6. Insert rows into MySQL Master
+   1. wait for `connect-offsets` topics to represent the connector's latest offset
 7. `flush logs;` on mysql 2
-9. kill mysql 1 container
+8. Insert rows into MySQL Master
+   2. wait for `connect-offsets` topics to represent the connector's latest offset
+9. kill / pause mysql 1 container
+10. Insert rows into MySQL Master
+11. Wait for proxySql to identify mysql 1 is unavailable and failover to mysql 2
+12. If connector does not fail, restart the connector's task (`curl -X POST http://localhost:8083/connectors/inventory-connector/tasks/0/restart`)
 
 At this point Debezium connector will fail.
 Even in case the connector's task is restarted (`curl -X POST http://localhost:8083/connectors/inventory-connector/tasks/0/restart`) the connector will not recover.<br>

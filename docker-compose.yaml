@@ -35,11 +35,6 @@ services:
      - MYSQL_ROOT_PASSWORD=debezium
      - MYSQL_USER=mysqluser
      - MYSQL_PASSWORD=mysqlpw
-    healthcheck:
-      test: [ "CMD-SHELL", 'mysqladmin ping' ]
-      interval: 10s
-      timeout: 2s
-      retries: 10
   mysql1:
     build:
       ./mysql1    

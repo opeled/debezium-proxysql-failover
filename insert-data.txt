@@ -9,4 +9,5 @@ INSERT INTO customers VALUES (default, 'XXX7','XXX7','XXX7@example.com');
 INSERT INTO customers VALUES (default, 'XXX8','XXX8','XXX8@example.com');
 INSERT INTO customers VALUES (default, 'XXX9','XXX9','XXX9@example.com');
 INSERT INTO customers VALUES (default, 'XXX10','XXX10','XXX10@example.com');
-INSERT INTO customers VALUES (default, 'XXX11','XXX11','XXX1@example.com');
+INSERT INTO customers VALUES (default, 'XXX11','XXX11','XXX11@example.com');
+INSERT INTO customers VALUES (default, 'XXX12','XXX12','XXX12@example.com');
