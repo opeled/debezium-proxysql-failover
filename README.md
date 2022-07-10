@@ -25,7 +25,9 @@ The deployment consists of the following components
 lima nerdctl compose up --build
 ```
 
-2. After all container are up and services are running, execute the following commands to set up proxySql with mysql slave 1 and mysql slave 2:
+3. Wait for mysql replication to kick in (master replication to slaves). If mysql slaves 1 + 2 contain the `inventory` database, replication is working.
+
+4. After all container are up and services are running, execute the following commands to set up proxySql with mysql slave 1 and mysql slave 2:
 ```
 lima nerdctl exec -it debezium-proxysql-failover_proxysql_1 bash -c 'mysql -u admin -padmin -h 127.0.0.1 -P 6032'
 
@@ -60,14 +62,18 @@ curl -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" 
 The idea here is to cause a discrepancy in mysql1 and mysql2 binlogs,
 specifically causing already executed gtids not to exist in the failover mysql instance.
 
-1. Create the env as specified [above](#env-set-up)
+1. Create the environment as detailed [above](#env-set-up)
 2. Insert rows into MySQL Master - DMLs can be taken from [insert-data.txt](./insert-data.txt)
 3. `flush logs;` on mysql 2
-4. repeat steps 2 + 3 multiple times
-5. `PURGE BINARY LOGS TO <latest_binary_log_file_name_in_mysql2 - 1>;` on mysql 2 - purge all binary logs in mysql 2 except last one
-6. kill / pause mysql 1 container
-7. Insert rows into MySQL Master
-8. Wait for proxySql to identify mysql 1 is unavailable and failover to mysql 2
+4. Repeat steps 2 + 3 multiple times 
+5. Wait until all committed rows are streamed by the connector _**BUT**_ `my_connect_offsets` topic is **NOT** fully updated to latest streamed gtid. 
+6. Purge all binary logs in mysql 2 except the two last ones. Do that by executing `PURGE BINARY LOGS TO '<mysql2-slave2-bin.xxx>';` on mysql 2, where `xxx` is the latest binary log number - 1
+    - `<mysql2-slave2-bin.xxx>` file name can be fetched by:
+      1. Connect to mysql 2 - `lima nerdctl exec -it debezium-proxysql-failover_mysql2_1 bash`
+      2. List `mysql2-slave2-bin` files - `ls /var/lib/mysql/mysql2-slave2-bin.*`
+7. Kill / pause mysql 1 container
+8. Insert rows into MySQL Master
+9. Wait for proxySql to identify mysql 1 is unavailable and failover to mysql 2
 
 At this point Debezium connector will fail.
 Even in case the connector's task is restarted (`curl -X POST http://localhost:8083/connectors/inventory-connector/tasks/0/restart`) the connector will not recover.<br>
