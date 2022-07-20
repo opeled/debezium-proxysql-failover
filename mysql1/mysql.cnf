@@ -52,4 +52,5 @@ binlog_format     = row
 binlog_row_image  = FULL
 binlog_transaction_dependency_tracking = WRITESET
 default_authentication_plugin = mysql_native_password
+slave-skip-errors=all
 
